@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claude Code Model Picker</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700;800&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg-main: #0d1117;
+      --bg-card: #161b22;
+      --bg-card-hover: #1f242c;
+      --border: #30363d;
+      --border-hover: #8b949e;
+      --text-main: #e6edf3;
+      --text-muted: #8b949e;
+
+      --claude-accent: #D97757;
+      --claude-bg: rgba(217, 119, 87, 0.1);
+
+      --terminal-green: #238636;
+      --terminal-black: #050505;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      line-height: 1.6;
+      min-height: 100vh;
+      overflow-x: hidden;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      background-position: center top;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes blink {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0;
+      }
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 40px 20px 80px;
+      animation: fadeUp 0.6s ease-out forwards;
+    }
+
+    /* Header */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 48px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+    }
+
+    header::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      width: 100px;
+      height: 1px;
+      background: var(--claude-accent);
+      box-shadow: 0 0 10px var(--claude-accent);
+    }
+
+    .logo-area {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .claude-logo {
+      width: 32px;
+      height: 32px;
+      background: var(--claude-accent);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: bold;
+      font-family: 'JetBrains Mono', monospace;
+      box-shadow: 0 0 20px var(--claude-bg);
+    }
+
+    header h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .cursor {
+      display: inline-block;
+      width: 10px;
+      height: 1.2em;
+      background-color: var(--claude-accent);
+      animation: blink 1s step-end infinite;
+      vertical-align: middle;
+    }
+
+    .badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      padding: 4px 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      color: var(--text-muted);
+    }
+
+    /* Configurator Config */
+    .section-header {
+      margin-bottom: 24px;
+    }
+
+    .section-header h2 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-header h2::before {
+      content: '>';
+      color: var(--claude-accent);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .section-header p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      background: rgba(0, 0, 0, 0.2);
+      padding: 6px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      display: inline-flex;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 8px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-main);
+    }
+
+    .tab-btn.active {
+      background: var(--border);
+      color: var(--text-main);
+    }
+
+    /* Configurator Grid */
+    .config-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .config-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+
+    .config-card:hover {
+      border-color: var(--border-hover);
+      transform: translateY(-2px);
+    }
+
+    .config-card.selected {
+      border-color: var(--claude-accent);
+      box-shadow: 0 0 0 1px var(--claude-accent), 0 0 20px var(--claude-bg);
+    }
+
+    .cfg-icon {
+      width: 32px;
+      height: 32px;
+      margin: 0 auto 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+
+    .cfg-icon svg {
+      width: 24px;
+      height: 24px;
+    }
+
+    .cfg-name {
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .revert-badge {
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--claude-accent);
+      color: #fff;
+      font-size: 0.6rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 6px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .config-card.selected .revert-badge.show {
+      opacity: 1;
+    }
+
+    /* Terminal Window */
+    .terminal {
+      background: var(--terminal-black);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-top: 16px;
+      margin-bottom: 56px;
+    }
+
+    .terminal-header {
+      background: #111111;
+      border-bottom: 1px solid var(--border);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .t-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin-right: 6px;
+      display: inline-block;
+    }
+
+    .t-dot.red {
+      background: #ff5f56;
+    }
+
+    .t-dot.yellow {
+      background: #ffbd2e;
+    }
+
+    .t-dot.green {
+      background: #27c93f;
+    }
+
+    .terminal-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .terminal-body {
+      position: relative;
+      padding: 24px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    pre {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      color: #a6accd;
+      white-space: pre-wrap;
+      line-height: 1.6;
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-main);
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      transition: all 0.2s;
+    }
+
+    .copy-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .copy-btn.copied {
+      background: var(--terminal-green);
+      color: #fff;
+      border-color: var(--terminal-green);
+    }
+
+    /* BIG STAT CARDS */
+    .big-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    .big-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      text-decoration: none;
+      color: inherit;
+      position: relative;
+      transition: all 0.3s;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .big-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--border-hover);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      background: var(--bg-card-hover);
+    }
+
+    /* Ranking Tag inside card */
+    .rank-tag {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-muted);
+    }
+
+    .rank-tag.first {
+      background: rgba(35, 134, 54, 0.2);
+      color: #4ade80;
+      border: 1px solid rgba(35, 134, 54, 0.5);
+    }
+
+    .rank-tag.second {
+      background: rgba(35, 134, 54, 0.1);
+      color: #4ade80;
+    }
+
+    .rank-tag.third {
+      background: rgba(35, 134, 54, 0.1);
+      color: #4ade80;
+    }
+
+    /* Top area */
+    .bc-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .bc-icon {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .bc-icon svg {
+      width: 32px;
+      height: 32px;
+    }
+
+    .bc-name {
+      font-size: 1.05rem;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    /* Main stat area */
+    .bc-stat-box {
+      text-align: center;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .bc-stat {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 2.8rem;
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.05em;
+      margin-bottom: 4px;
+    }
+
+    .bc-stat-dec {
+      font-size: 1.2rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .bc-stat-sub {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .bc-stat.stat-free {
+      color: #4ade80;
+    }
+
+    /* Progress bar inside card */
+    .bc-bar-bg {
+      width: 100%;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 2px;
+      margin-top: 20px;
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+
+    .bc-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .bc-footer-note {
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Tags */
+    .c-tag {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-family: 'JetBrains Mono', monospace;
+      padding: 3px 8px;
+      border-radius: 4px;
+      border: 1px solid transparent;
+      margin-bottom: 12px;
+    }
+
+    .c-tag.t-green {
+      background: rgba(35, 134, 54, 0.1);
+      color: #4ade80;
+      border-color: rgba(63, 185, 80, 0.2);
+    }
+
+    .c-tag.t-blue {
+      background: rgba(31, 111, 235, 0.1);
+      color: #60a5fa;
+      border-color: rgba(88, 166, 255, 0.2);
+    }
+
+    .c-tag.t-orange {
+      background: rgba(217, 119, 87, 0.1);
+      color: #fb923c;
+      border-color: rgba(217, 119, 87, 0.2);
+    }
+
+    .c-tag.t-red {
+      background: rgba(218, 54, 51, 0.1);
+      color: #f87171;
+      border-color: rgba(248, 81, 73, 0.2);
+    }
+
+    .tab-content {
+      display: none;
+      animation: fadeUp 0.3s ease-out;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Shared Icon Colors */
+    .ic-claude {
+      color: #D97757;
+    }
+
+    .ic-gemini {
+      color: #60a5fa;
+    }
+
+    .ic-devstral {
+      color: #fb923c;
+    }
+
+    .ic-qwen {
+      color: #a78bfa;
+      font-family: 'JetBrains Mono';
+      font-weight: bold;
+    }
+
+    .ic-deepseek {
+      color: #38bdf8;
+      font-family: 'JetBrains Mono';
+      font-weight: bold;
+      font-style: italic;
+    }
+
+    .ic-openrouter {
+      color: #cbd5e1;
+    }
+
+    footer {
+      text-align: center;
+      padding-top: 40px;
+      margin-top: 60px;
+      border-top: 1px solid var(--border);
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+    }
+
+    footer a {
+      color: var(--claude-accent);
+      text-decoration: none;
+    }
+
+    #yt-link:hover div:first-of-type {
+      background: rgba(217, 119, 87, 0.9) !important;
+      transform: translate(-50%, -50%) scale(1.1) !important;
+      border-color: var(--claude-accent) !important;
+    }
+
+    #yt-link:hover img {
+      border-color: var(--claude-accent) !important;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- SVG Defs - Logos reais -->
+  <svg style="display:none;">
+    <defs>
+      <g id="svg-claude">
+        <path d="M17.3041 3.541h-3.6718l6.696 16.918H24Zm-10.6082 0L0 20.459h3.7442l1.3693-3.5527h7.0052l1.3693 3.5528h3.7442L10.5363 3.5409Zm-.3712 10.2232 2.2914-5.9456 2.2914 5.9456Z" fill="currentColor" />
+      </g>
+      <g id="svg-gemini">
+        <path d="M11.04 19.32Q12 21.51 12 24q0-2.49.93-4.68.96-2.19 2.58-3.81t3.81-2.55Q21.51 12 24 12q-2.49 0-4.68-.93a12.3 12.3 0 0 1-3.81-2.58 12.3 12.3 0 0 1-2.58-3.81Q12 2.49 12 0q0 2.49-.96 4.68-.93 2.19-2.55 3.81a12.3 12.3 0 0 1-3.81 2.58Q2.49 12 0 12q2.49 0 4.68.96 2.19.93 3.81 2.55t2.55 3.81" fill="currentColor" />
+      </g>
+      <g id="svg-openrouter">
+        <path d="M16.778 1.844v1.919q-.569-.026-1.138-.032-.708-.008-1.415.037c-1.93.126-4.023.728-6.149 2.237-2.911 2.066-2.731 1.95-4.14 2.75-.396.223-1.342.574-2.185.798-.841.225-1.753.333-1.751.333v4.229s.768.108 1.61.333c.842.224 1.789.575 2.185.799 1.41.798 1.228.683 4.14 2.75 2.126 1.509 4.22 2.11 6.148 2.236.88.058 1.716.041 2.555.005v1.918l7.222-4.168-7.222-4.17v2.176c-.86.038-1.611.065-2.278.021-1.364-.09-2.417-.357-3.979-1.465-2.244-1.593-2.866-2.027-3.68-2.508.889-.518 1.449-.906 3.822-2.59 1.56-1.109 2.614-1.377 3.978-1.466.667-.044 1.418-.017 2.278.02v2.176L24 6.014Z" fill="currentColor" />
+      </g>
+      <g id="svg-mistral">
+        <path d="M17.143 3.429v3.428h-3.429v3.429h-3.428V6.857H6.857V3.43H3.43v13.714H0v3.428h10.286v-3.428H6.857v-3.429h3.429v3.429h3.429v-3.429h3.428v3.429h-3.428v3.428H24v-3.428h-3.43V3.429z" fill="currentColor" />
+      </g>
+      <g id="svg-qwen">
+        <path d="M12.604 1.34c.393.69.784 1.382 1.174 2.075a.18.18 0 00.157.091h5.552c.174 0 .322.11.446.327l1.454 2.57c.19.337.24.478.024.837-.26.43-.513.864-.76 1.3l-.367.658c-.106.196-.223.28-.04.512l2.652 4.637c.172.301.111.494-.043.77-.437.785-.882 1.564-1.335 2.34-.159.272-.352.375-.68.37-.777-.016-1.552-.01-2.327.016a.099.099 0 00-.081.05 575.097 575.097 0 01-2.705 4.74c-.169.293-.38.363-.725.364-.997.003-2.002.004-3.017.002a.537.537 0 01-.465-.271l-1.335-2.323a.09.09 0 00-.083-.049H4.982c-.285.03-.553-.001-.805-.092l-1.603-2.77a.543.543 0 01-.002-.54l1.207-2.12a.198.198 0 000-.197 550.951 550.951 0 01-1.875-3.272l-.79-1.395c-.16-.31-.173-.496.095-.965.465-.813.927-1.625 1.387-2.436.132-.234.304-.334.584-.335a338.3 338.3 0 012.589-.001.124.124 0 00.107-.063l2.806-4.895a.488.488 0 01.422-.246c.524-.001 1.053 0 1.583-.006L11.704 1c.341-.003.724.032.9.34zm-3.432.403a.06.06 0 00-.052.03L6.254 6.788a.157.157 0 01-.135.078H3.253c-.056 0-.07.025-.041.074l5.81 10.156c.025.042.013.062-.034.063l-2.795.015a.218.218 0 00-.2.116l-1.32 2.31c-.044.078-.021.118.068.118l5.716.008c.046 0 .08.02.104.061l1.403 2.454c.046.081.092.082.139 0l5.006-8.76.783-1.382a.055.055 0 01.096 0l1.424 2.53a.122.122 0 00.107.062l2.763-.02a.04.04 0 00.035-.02.041.041 0 000-.04l-2.9-5.086a.108.108 0 010-.113l.293-.507 1.12-1.977c.024-.041.012-.062-.035-.062H9.2c-.059 0-.073-.026-.043-.077l1.434-2.505a.107.107 0 000-.114L9.225 1.774a.06.06 0 00-.053-.031zm6.29 8.02c.046 0 .058.02.034.06l-.832 1.465-2.613 4.585a.056.056 0 01-.05.029.058.058 0 01-.05-.029L8.498 9.841c-.02-.034-.01-.052.028-.054l.216-.012 6.722-.012z" fill="currentColor" />
+      </g>
+      <g id="svg-deepseek">
+        <path d="M23.748 4.482c-.254-.124-.364.113-.512.234-.051.039-.094.09-.137.136-.372.397-.806.657-1.373.626-.829-.046-1.537.214-2.163.848-.133-.782-.575-1.248-1.247-1.548-.352-.156-.708-.311-.955-.65-.172-.241-.219-.51-.305-.774-.055-.16-.11-.323-.293-.35-.2-.031-.278.136-.356.276-.313.572-.434 1.202-.422 1.84.027 1.436.633 2.58 1.838 3.393.137.093.172.187.129.323-.082.28-.18.552-.266.833-.055.179-.137.217-.329.14a5.526 5.526 0 01-1.736-1.18c-.857-.828-1.631-1.742-2.597-2.458a11.365 11.365 0 00-.689-.471c-.985-.957.13-1.743.388-1.836.27-.098.093-.432-.779-.428-.872.004-1.67.295-2.687.684a3.055 3.055 0 01-.465.137 9.597 9.597 0 00-2.883-.102c-1.885.21-3.39 1.102-4.497 2.623C.082 8.606-.231 10.684.152 12.85c.403 2.284 1.569 4.175 3.36 5.653 1.858 1.533 3.997 2.284 6.438 2.14 1.482-.085 3.133-.284 4.994-1.86.47.234.962.327 1.78.397.63.059 1.236-.03 1.705-.128.735-.156.684-.837.419-.961-2.155-1.004-1.682-.595-2.113-.926 1.096-1.296 2.746-2.642 3.392-7.003.05-.347.007-.565 0-.845-.004-.17.035-.237.23-.256a4.173 4.173 0 001.545-.475c1.396-.763 1.96-2.015 2.093-3.517.02-.23-.004-.467-.247-.588zM11.581 18c-2.089-1.642-3.102-2.183-3.52-2.16-.392.024-.321.471-.235.763.09.288.207.486.371.739.114.167.192.416-.113.603-.673.416-1.842-.14-1.897-.167-1.361-.802-2.5-1.86-3.301-3.307-.774-1.393-1.224-2.887-1.298-4.482-.02-.386.093-.522.477-.592a4.696 4.696 0 011.529-.039c2.132.312 3.946 1.265 5.468 2.774.868.86 1.525 1.887 2.202 2.891.72 1.066 1.494 2.082 2.48 2.914.348.292.625.514.891.677-.802.09-2.14.11-3.054-.614zm1-6.44a.306.306 0 01.415-.287.302.302 0 01.2.288.306.306 0 01-.31.307.303.303 0 01-.304-.308zm3.11 1.596c-.2.081-.399.151-.59.16a1.245 1.245 0 01-.798-.254c-.274-.23-.47-.358-.552-.758a1.73 1.73 0 01.016-.588c.07-.327-.008-.537-.239-.727-.187-.156-.426-.199-.688-.199a.559.559 0 01-.254-.078c-.11-.054-.2-.19-.114-.358.028-.054.16-.186.192-.21.356-.202.767-.136 1.146.016.352.144.618.408 1.001.782.391.451.462.576.685.914.176.265.336.537.445.848.067.195-.019.354-.25.452z" fill="currentColor" />
+      </g>
+    </defs>
+  </svg>
+
+  <div class="container">
+    <!-- Thumbnail YouTube -->
+    <a id="yt-link" href="#" target="_blank" style="display:block; text-align:center; margin-bottom:32px; position:relative; text-decoration:none; cursor:pointer;">
+      <img src="THUMBS (24).png" alt="Claude Code de Graça - Tutorial" style="max-width:100%; border-radius:16px; border:1px solid var(--border); box-shadow:0 8px 30px rgba(0,0,0,0.5); display:block; margin:0 auto;">
+      <!-- Play button overlay -->
+      <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:80px; height:80px; background:rgba(0,0,0,0.7); border-radius:50%; display:flex; align-items:center; justify-content:center; transition:all 0.3s; backdrop-filter:blur(4px); border:2px solid rgba(255,255,255,0.2);">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none"><path d="M8 5v14l11-7L8 5z" fill="#fff"/></svg>
+      </div>
+      <div style="position:absolute; bottom:16px; left:50%; transform:translateX(-50%); background:rgba(217,119,87,0.9); color:#fff; font-family:'JetBrains Mono',monospace; font-size:0.8rem; font-weight:600; padding:6px 16px; border-radius:8px; backdrop-filter:blur(4px);">Assistir Tutorial</div>
+    </a>
+
+    <!-- Header -->
+    <header>
+      <div class="logo-area">
+        <div class="claude-logo">C</div>
+        <h1>Modelos do Claude Code <span class="cursor"></span></h1>
+      </div>
+      <div style="display: flex; gap: 12px; align-items: center;">
+        <a href="https://openrouter.ai" target="_blank" class="badge" style="text-decoration:none;">openrouter.ai</a>
+      </div>
+    </header>
+
+    <!-- Configurator -->
+    <section id="configurator">
+      <div class="section-header">
+        <h2>Configurar Identidade</h2>
+        <p>Selecione seu modo de implantação e o LLM preferido para gerar o script de configuração.</p>
+      </div>
+      <div class="tabs" id="mode-tabs">
+        <button class="tab-btn active" data-mode="setup">Inicializar</button>
+        <button class="tab-btn" data-mode="change">Troca Rápida</button>
+      </div>
+      <div class="config-grid" id="model-cards"></div>
+      <div class="api-key-input" style="display:flex; gap:12px; align-items:center; margin-bottom:12px; padding:12px 16px; background:var(--bg-card); border:1px solid var(--border); border-radius:12px;">
+        <label for="api-key" style="font-family:'JetBrains Mono',monospace; font-size:0.8rem; color:var(--text-muted); white-space:nowrap;">🔑 API Key:</label>
+        <input type="text" id="api-key" placeholder="sk-or-v1-..." style="flex:1; background:var(--terminal-black); border:1px solid var(--border); border-radius:8px; padding:8px 12px; color:var(--text-main); font-family:'JetBrains Mono',monospace; font-size:0.8rem; outline:none; transition:border-color 0.2s;" onfocus="this.style.borderColor='var(--claude-accent)'" onblur="this.style.borderColor='var(--border)'">
+        <a href="https://openrouter.ai/keys" target="_blank" style="font-family:'JetBrains Mono',monospace; font-size:0.7rem; color:var(--claude-accent); text-decoration:none; white-space:nowrap;">Obter chave →</a>
+      </div>
+      <div class="terminal">
+        <div class="terminal-header">
+          <div style="display:flex;">
+            <div class="t-dot red"></div>
+            <div class="t-dot yellow"></div>
+            <div class="t-dot green"></div>
+          </div>
+          <div class="terminal-title" id="status-text">Conexão: Estabelecida</div>
+          <div style="width: 54px;"></div>
+        </div>
+        <div class="terminal-body">
+          <button class="copy-btn" id="copy-btn" onclick="copyCode()">Copiar</button>
+          <pre id="code-block"></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- Overview -->
+    <section id="overview" style="margin-bottom: 60px;">
+      <div class="section-header">
+        <h2>Visão Geral</h2>
+        <p>Clique no card da Anthropic para alternar entre Sonnet e Opus.</p>
+      </div>
+      <div class="tabs" id="ov-tabs">
+        <button class="tab-btn" data-tab="ov-cost">$ Custo</button>
+        <button class="tab-btn active" data-tab="ov-quality">⚡ Qualidade</button>
+        <button class="tab-btn" data-tab="ov-info">◎ Informações</button>
+      </div>
+      <div id="ov-cost" class="tab-content">
+        <div class="big-grid" id="ov-grid-cost"></div>
+      </div>
+      <div id="ov-quality" class="tab-content active">
+        <div class="big-grid" id="ov-grid-quality"></div>
+      </div>
+      <div id="ov-info" class="tab-content">
+        <div class="big-grid" id="ov-grid-info"></div>
+      </div>
+    </section>
+
+    <!-- At a Glance -->
+    <section id="glance">
+      <div class="section-header">
+        <h2>Resumo</h2>
+        <p>Alterne entre as abas para comparar os modelos disponíveis.</p>
+      </div>
+      <div class="tabs" id="glance-tabs">
+        <button class="tab-btn active" data-tab="gl-cost">$ Custo</button>
+        <button class="tab-btn" data-tab="gl-perf">⚡ Desempenho</button>
+        <button class="tab-btn" data-tab="gl-speed">◎ Velocidade</button>
+      </div>
+
+      <div id="gl-cost" class="tab-content active">
+        <div class="big-grid" id="grid-cost"></div>
+      </div>
+      <div id="gl-perf" class="tab-content">
+        <div class="big-grid" id="grid-perf"></div>
+      </div>
+      <div id="gl-speed" class="tab-content">
+        <div class="big-grid" id="grid-speed"></div>
+      </div>
+      <p style="text-align:center; font-size:0.75rem; color:var(--text-muted); margin-top:30px;">Métricas baseadas em
+        testes da comunidade e médias de preços.</p>
+    </section>
+
+    <footer>
+      <p>Valores referentes a Março de 2026 &middot; <a href="https://openrouter.ai" target="_blank">openrouter.ai</a>
+      </p>
+      <p style="margin-top: 8px;">Criado por Marcelo Anders</p>
+    </footer>
+  </div>
+
+  <script>
+    // --- Data for Top Configurator ---
+    const REVERT_PROMPT = `Task: Revert Claude Code back to using Claude (Anthropic) as the model.
+Do the following steps in order. Do nothing else.
+
+## Step 1: Clean up ~/.zshrc (or ~/.bashrc)
+
+Open the user's shell config file (~/.zshrc or ~/.bashrc) and remove the following environment variable exports if they exist:
+
+export ANTHROPIC_BASE_URL
+export ANTHROPIC_AUTH_TOKEN
+export ANTHROPIC_API_KEY
+export ANTHROPIC_MODEL
+export OPENROUTER_API_KEY
+
+Remove only these exact lines. Do not remove any other lines or exports. If none of these exist, skip this step.
+
+## Step 2: Clean up ~/.claude/settings.json
+
+Open ~/.claude/settings.json and remove the following keys from inside the "env" block if they exist:
+
+ANTHROPIC_BASE_URL
+ANTHROPIC_AUTH_TOKEN
+ANTHROPIC_API_KEY
+ANTHROPIC_MODEL
+
+Do not remove any other keys. Do not delete the file. If the "env" block becomes empty, remove the empty block too.
+Also remove the top-level "model" key if it is set to "sonnet[1m]".
+
+## Step 3: Unset variables in the current shell
+
+Run these commands to clear any active environment variables from the current session:
+
+unset ANTHROPIC_BASE_URL
+unset ANTHROPIC_AUTH_TOKEN
+unset ANTHROPIC_API_KEY
+unset ANTHROPIC_MODEL
+unset OPENROUTER_API_KEY
+
+## Step 4: Confirm what you did
+
+List exactly which keys you removed from each file, and which variables you unset. If you found nothing to remove in a step, say so.
+
+Stop there. Do not install anything, do not modify any other files, do not run claude login.`;
+
+    const models = [
+      { id: 'claude', name: 'Claude (Padrão)', iconClass: 'ic-claude', svgId: 'svg-claude', revert: true },
+      { id: 'google/gemini-2.5-pro-preview', name: 'Gemini Pro', iconClass: 'ic-gemini', svgId: 'svg-gemini' },
+      { id: 'mistralai/devstral-small', name: 'Devstral', iconClass: 'ic-devstral', svgId: 'svg-mistral' },
+      { id: 'qwen/qwen3-coder', name: 'Qwen3', iconClass: 'ic-qwen', svgId: 'svg-qwen' },
+      { id: 'deepseek/deepseek-chat-v3-0324:free', name: 'DeepSeek V3', iconClass: 'ic-deepseek', svgId: 'svg-deepseek' },
+      { id: 'openrouter/free', name: 'Router Gratuito', iconClass: 'ic-openrouter', svgId: 'svg-openrouter' },
+    ];
+
+    function getApiKey() {
+      return document.getElementById('api-key').value.trim();
+    }
+
+    function setupPrompt(modelId) {
+      const apiKey = getApiKey();
+      return `## Background
+
+Claude Code is Anthropic's official CLI tool for using AI models as a coding assistant directly in the terminal. By default, it connects to Anthropic's API and uses Claude models, which requires a paid Anthropic API subscription.
+
+OpenRouter (openrouter.ai) is a unified API gateway that provides access to hundreds of AI models from different providers (Google, OpenAI, Meta, DeepSeek, etc.) through a single API endpoint. Some of these models are completely free to use. OpenRouter's API is compatible with the Anthropic API format, which means Claude Code can be configured to talk to OpenRouter instead of Anthropic directly.
+
+This setup lets you use Claude Code as your coding assistant while routing the actual AI requests through OpenRouter — giving you access to free models like Gemini 2.5 Pro or DeepSeek V3, or paid models from any provider, all through Claude Code's interface.
+
+## What You Need To Do
+
+Configure Claude Code's settings file (~/.claude/settings.json) so that it sends API requests to OpenRouter instead of Anthropic. This is done by setting environment variables inside the settings file that override Claude Code's default API connection.
+
+## My Details
+- OpenRouter API Key: ${apiKey || '[PASTE YOUR KEY HERE — get one free at https://openrouter.ai/keys]'}
+- Model: ${modelId}
+
+## Step 1: Create the config directory
+
+Run this command:
+
+mkdir -p ~/.claude
+
+This creates Claude Code's configuration directory if it doesn't already exist. It's safe to run even if the directory already exists.
+
+## Step 2: Write the settings file
+
+The file ~/.claude/settings.json controls Claude Code's behavior. It supports an "env" block that sets environment variables for the Claude Code process. We use this to redirect API calls to OpenRouter.
+
+Here is what each variable does:
+- ANTHROPIC_BASE_URL: The API endpoint Claude Code sends requests to. We point this to OpenRouter instead of Anthropic.
+- ANTHROPIC_AUTH_TOKEN: The authentication token sent with API requests. We use our OpenRouter API key here.
+- ANTHROPIC_API_KEY: Claude Code's default Anthropic API key. We set this to an empty string to prevent Claude Code from trying to authenticate with Anthropic or prompting the user to log in.
+- ANTHROPIC_MODEL: The model ID to use for AI requests. This is the OpenRouter model ID.
+
+Create or update ~/.claude/settings.json with this content. Replace the two placeholders with my details from above:
+
+{
+  "env": {
+    "ANTHROPIC_BASE_URL": "https://openrouter.ai/api",
+    "ANTHROPIC_AUTH_TOKEN": "${apiKey || '[MY OPENROUTER API KEY]'}",
+    "ANTHROPIC_API_KEY": "",
+    "ANTHROPIC_MODEL": "${modelId}"
+  },
+  "model": "sonnet[1m]"
+}
+
+The "model" field at the top level is required for Claude Code's internal validation. It tells Claude Code which internal model profile to use for things like token limits and context windows. "sonnet[1m]" means "use the Sonnet profile with a 1 million token context window." This does NOT control which AI model answers your questions — ANTHROPIC_MODEL does that. Do not remove or change the "model" field.
+
+If ~/.claude/settings.json already exists and contains other settings (like "permissions", "projects", or "allowedTools"), merge the "env" block and "model" field into the existing file. Preserve all existing settings — only add or update the keys shown above.
+
+## Rules You MUST Follow
+
+1. ANTHROPIC_BASE_URL must be exactly "https://openrouter.ai/api" — do NOT append /v1 to it. Claude Code automatically appends /v1 when constructing API request URLs. If you write "https://openrouter.ai/api/v1" here, the actual request will go to /api/v1/v1/messages, which is a broken URL that returns 404 errors on every single API call.
+
+2. The OpenRouter API key goes in ANTHROPIC_AUTH_TOKEN — NOT in ANTHROPIC_API_KEY. These are two different environment variables that serve different purposes. ANTHROPIC_AUTH_TOKEN is the bearer token sent in the Authorization header of API requests. ANTHROPIC_API_KEY is Claude Code's internal Anthropic key, which must be set to an empty string "" to prevent Claude Code from trying to use Anthropic's API directly.
+
+3. Do NOT modify ~/.zshrc, ~/.bashrc, ~/.bash_profile, or any other shell configuration file. The settings.json "env" block is the only correct place for these variables. Setting them in shell config creates conflicts and unpredictable behavior because both sources try to control the same settings.
+
+4. Do NOT remove or change "model": "sonnet[1m]". It is required for Claude Code to start. Without it, Claude Code's model validation fails. It does not affect which AI model processes your requests.
+
+5. Do NOT add extra fields like "effortLevel", "preferences", "skipDangerousModePermissionPrompt", or any other keys not shown above (unless merging with an existing file that already has them).
+
+6. Do NOT try to test the API connection by running a curl command or making any API request. The settings only take effect when Claude Code starts a new session. Testing from the current session will fail because the environment variables aren't loaded yet.
+
+7. The JSON file must be syntactically valid — no trailing commas, no comments, proper double-quoting on all keys and string values.
+
+## Step 3: Verify the file
+
+After writing the file, read back the contents of ~/.claude/settings.json and confirm ALL of the following:
+
+- ANTHROPIC_BASE_URL is exactly "https://openrouter.ai/api" (ends with /api, NOT /api/v1)
+- ANTHROPIC_AUTH_TOKEN contains the full OpenRouter API key (should start with sk-or-)
+- ANTHROPIC_API_KEY is exactly "" (an empty string — it must be present as a key with an empty string value, not missing, not null)
+- ANTHROPIC_MODEL contains the exact model ID: ${modelId}
+- "model": "sonnet[1m]" is present at the top level of the JSON object
+- The file is valid JSON with no syntax errors
+
+If any of these checks fail, fix the file before proceeding.
+
+## Common Errors the User May See After Setup
+
+- "Model not found" → The ANTHROPIC_MODEL value doesn't match any model on OpenRouter. Model IDs are case-sensitive and must include the provider prefix. Check the exact ID at openrouter.ai/models.
+
+- 429 rate limit errors → Free models have per-minute and per-day usage limits set by OpenRouter. Wait 60 seconds and try again. If it keeps happening, the daily limit may be reached.
+
+- "Invalid API key" or authentication errors → The API key is in the wrong variable. It must be in ANTHROPIC_AUTH_TOKEN. Confirm the key starts with sk-or- and was copied completely.
+
+- Claude Code still asks to log in to Anthropic → ANTHROPIC_API_KEY is either missing from the settings file or has a non-empty value. It must be present and set to exactly "" (empty string).
+
+- Settings don't seem to take effect → The user must quit their current terminal entirely and open a brand new terminal window. Then run \`claude\`. Settings from settings.json are only loaded when Claude Code starts — they cannot be hot-reloaded into an existing session.
+
+## Step 4: Tell the user it's done
+
+Tell me:
+1. Setup is complete — Claude Code is now configured to use OpenRouter
+2. I need to QUIT my current terminal completely and open a brand new terminal window (not just a new tab)
+3. Run \`claude\` in the new terminal
+4. I should see my chosen model name in the Claude Code startup output, confirming it's connected through OpenRouter
+5. If I want to switch models later, I just change the ANTHROPIC_MODEL value in ~/.claude/settings.json and open a new terminal session`;
+    }
+
+    function changePrompt(modelId) {
+      return `Trocar o Claude Code para usar o modelo: ${modelId}
+Abra ~/.claude/settings.json e troque apenas o valor de ANTHROPIC_MODEL para:
+"ANTHROPIC_MODEL": "${modelId}"
+Salve e reinicie o terminal.`;
+    }
+
+    let selectedModel = 0;
+    let currentMode = 'setup';
+
+    const cardsContainer = document.getElementById('model-cards');
+    models.forEach((m, i) => {
+      const card = document.createElement('div');
+      card.className = 'config-card' + (i === 0 ? ' selected' : '');
+      card.innerHTML = `
+    <div class="cfg-icon ${m.iconClass}"><svg viewBox="0 0 24 24"><use href="#${m.svgId}"></use></svg></div>
+    <div class="cfg-name">${m.name}</div>
+    <div class="revert-badge ${m.revert ? 'show' : ''}">REVERTER</div>
+  `;
+      card.addEventListener('click', () => {
+        selectedModel = i;
+        document.querySelectorAll('.config-card').forEach((c, idx) => c.classList.toggle('selected', idx === i));
+        updateCode();
+      });
+      cardsContainer.appendChild(card);
+    });
+
+    document.querySelectorAll('#mode-tabs .tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#mode-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentMode = btn.dataset.mode;
+        updateCode();
+      });
+    });
+
+    function updateCode() {
+      const m = models[selectedModel];
+      const codeEl = document.getElementById('code-block');
+      const apiKeyBox = document.querySelector('.api-key-input');
+      apiKeyBox.style.display = m.revert ? 'none' : 'flex';
+      document.getElementById('status-text').innerText = m.revert ? 'Revertendo para o Padrão' : (currentMode === 'setup' ? 'Inicializando: ' + m.id : 'Troca Rápida: ' + m.id);
+      codeEl.textContent = m.revert ? REVERT_PROMPT : (currentMode === 'setup' ? setupPrompt(m.id) : changePrompt(m.id));
+    }
+    function copyCode() {
+      navigator.clipboard.writeText(document.getElementById('code-block').textContent).then(() => {
+        const btn = document.getElementById('copy-btn');
+        btn.textContent = 'Copiado!'; btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'Copiar'; btn.classList.remove('copied'); }, 2000);
+      });
+    }
+    updateCode();
+
+    // Update code when API key changes
+    document.getElementById('api-key').addEventListener('input', updateCode);
+
+    // --- Data for Big Cards ---
+    function renderBigCards(containerId, items, isOverview = false) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = items.map(m => `
+    <div class="big-card" ${m.clickable ? 'data-clickable="true"' : ''}>
+      ${m.rank ? `<div class="rank-tag ${m.rank.toLowerCase() === '1º' ? 'first' : m.rank.toLowerCase() === '2º' ? 'second' : 'third'}">${m.rank}</div>` : ''}
+      <div class="bc-header">
+        <div class="bc-icon ${m.iconClass}"><svg viewBox="0 0 24 24"><use href="#${m.svgId}"></use></svg></div>
+        <div class="bc-name">${m.name}</div>
+      </div>
+      <div class="bc-stat-box">
+        ${isOverview && m.tag ? `<div class="c-tag ${m.tag.cls}">${m.tag.text}</div>` : ''}
+        <div class="bc-stat ${m.stat === 'GRÁTIS' ? 'stat-free' : ''}">${m.stat}<span class="bc-stat-dec">${m.statDec || ''}</span></div>
+        <div class="bc-stat-sub">${m.sub}</div>
+      </div>
+      ${!isOverview ? `
+        <div class="bc-bar-bg"><div class="bc-bar-fill" style="width: ${m.bar}%; background: ${m.barColor}"></div></div>
+        <div class="bc-footer-note">${m.note}</div>
+      ` : `
+        <div class="bc-bar-bg" style="opacity:0; height:10px;"></div>
+        <div class="bc-footer-note">${m.note}</div>
+        ${m.clickHint ? `<div style="text-align:center; font-size:0.7rem; color:var(--text-muted); font-style:italic; margin-top:4px;">${m.clickHint}</div>` : ''}
+      `}
+    </div>
+  `).join('');
+    }
+
+    // --- Overview: Sonnet/Opus toggle ---
+    let ovShowOpus = false;
+
+    const ovCostSonnet = [
+      { name: 'Sonnet 4.6', stat: '~$9', sub: 'BLENDED / 1M TOKENS', note: 'MÁXIMA PERFORMANCE', tag: { text: 'RECOMENDADO', cls: 't-green' }, iconClass: 'ic-claude', svgId: 'svg-claude', clickable: true, clickHint: 'Clique p/ Opus →' },
+      { name: 'Gemini 2.5 Pro', stat: '~$1.40', sub: 'BLENDED / 1M TOKENS', note: 'MELHOR VALOR', tag: { text: 'CUSTO-BENEFÍCIO', cls: 't-green' }, iconClass: 'ic-gemini', svgId: 'svg-gemini' },
+      { name: 'Devstral Small', stat: '~$0.20', sub: 'BLENDED / 1M TOKENS', note: 'BOM PARA O BOLSO', tag: { text: 'ECONÔMICO', cls: 't-orange' }, iconClass: 'ic-devstral', svgId: 'svg-mistral' },
+      { name: 'Qwen3 Coder', stat: 'GRÁTIS', sub: 'NO OPENROUTER', note: 'NÍVEL GRATUITO', tag: { text: 'GRÁTIS', cls: 't-green' }, iconClass: 'ic-qwen', svgId: 'svg-qwen' },
+      { name: 'DeepSeek V3', stat: 'GRÁTIS', sub: 'NO OPENROUTER', note: 'GRÁTIS · ALTO RISCO', tag: { text: 'RISCO DE DADOS', cls: 't-red' }, iconClass: 'ic-deepseek', svgId: 'svg-deepseek' },
+      { name: 'Router Gratuito', stat: 'GRÁTIS', sub: 'MODELO ALEATÓRIO GRÁTIS', note: 'AUTO · ROTAÇÃO GRÁTIS', tag: { text: 'GRÁTIS', cls: 't-green' }, iconClass: 'ic-openrouter', svgId: 'svg-openrouter' },
+    ];
+    const ovCostOpus = [
+      { name: 'Opus 4.6', stat: '~$15', sub: 'BLENDED / 1M TOKENS', note: 'MÁXIMA PERFORMANCE', tag: { text: 'RECOMENDADO', cls: 't-green' }, iconClass: 'ic-claude', svgId: 'svg-claude', clickable: true, clickHint: 'Clique p/ Sonnet →' },
+      ...ovCostSonnet.slice(1),
+    ];
+
+    const ovQualitySonnet = [
+      { name: 'Sonnet 4.6', stat: '9.2', statDec: '/10', sub: 'EXCELENTE', note: 'MÁXIMA PERFORMANCE', tag: { text: 'RECOMENDADO', cls: 't-green' }, iconClass: 'ic-claude', svgId: 'svg-claude', clickable: true, clickHint: 'Clique p/ Opus →' },
+      { name: 'Gemini 2.5 Pro', stat: '8.5', statDec: '/10', sub: 'MUITO BOM', note: 'MELHOR VALOR', tag: { text: 'CUSTO-BENEFÍCIO', cls: 't-green' }, iconClass: 'ic-gemini', svgId: 'svg-gemini' },
+      { name: 'Devstral Small', stat: '7.0', statDec: '/10', sub: 'BOM', note: 'BOM PARA O BOLSO', tag: { text: 'ECONÔMICO', cls: 't-orange' }, iconClass: 'ic-devstral', svgId: 'svg-mistral' },
+      { name: 'Qwen3 Coder', stat: '7.2', statDec: '/10', sub: 'BOM', note: 'NÍVEL GRATUITO', tag: { text: 'GRÁTIS', cls: 't-green' }, iconClass: 'ic-qwen', svgId: 'svg-qwen' },
+      { name: 'DeepSeek V3', stat: '8.3', statDec: '/10', sub: 'MUITO BOM', note: 'GRÁTIS · ALTO RISCO', tag: { text: 'RISCO DE DADOS', cls: 't-red' }, iconClass: 'ic-deepseek', svgId: 'svg-deepseek' },
+      { name: 'Router Gratuito', stat: 'Varia', sub: 'MODELO ROTATIVO', note: 'AUTO · ROTAÇÃO GRÁTIS', tag: { text: 'GRÁTIS', cls: 't-green' }, iconClass: 'ic-openrouter', svgId: 'svg-openrouter' },
+    ];
+    const ovQualityOpus = [
+      { name: 'Opus 4.6', stat: '9.8', statDec: '/10', sub: 'EXCELENTE', note: 'MÁXIMA PERFORMANCE', tag: { text: 'RECOMENDADO', cls: 't-green' }, iconClass: 'ic-claude', svgId: 'svg-claude', clickable: true, clickHint: 'Clique p/ Sonnet →' },
+      ...ovQualitySonnet.slice(1),
+    ];
+
+    const ovInfoSonnet = [
+      { name: 'Sonnet 4.6', stat: '200K', sub: 'JANELA DE TOKEN', note: 'MÁXIMA PERFORMANCE', tag: { text: 'RECOMENDADO', cls: 't-green' }, iconClass: 'ic-claude', svgId: 'svg-claude', clickable: true, clickHint: 'Clique p/ Opus →' },
+      { name: 'Gemini 2.5 Pro', stat: '1M', sub: 'JANELA DE TOKEN', note: 'MELHOR VALOR', tag: { text: 'CUSTO-BENEFÍCIO', cls: 't-green' }, iconClass: 'ic-gemini', svgId: 'svg-gemini' },
+      { name: 'Devstral Small', stat: 'GDPR', sub: 'CONFORME LEI EU', note: 'BOM PARA O BOLSO', tag: { text: 'ECONÔMICO', cls: 't-orange' }, iconClass: 'ic-devstral', svgId: 'svg-mistral' },
+      { name: 'Qwen3 Coder', stat: '128K', sub: 'LEIS DE CÓDIGO CHINA', note: 'NÍVEL GRATUITO', tag: { text: 'GRÁTIS', cls: 't-green' }, iconClass: 'ic-qwen', svgId: 'svg-qwen' },
+      { name: 'DeepSeek V3', stat: '128K', sub: 'DADOS REDE CHINA', note: 'GRÁTIS · ALTO RISCO', tag: { text: 'RISCO DE DADOS', cls: 't-red' }, iconClass: 'ic-deepseek', svgId: 'svg-deepseek' },
+      { name: 'Router Gratuito', stat: 'Auto', sub: 'MODO DE ROTAÇÃO', note: 'AUTO · ROTAÇÃO GRÁTIS', tag: { text: 'GRÁTIS', cls: 't-green' }, iconClass: 'ic-openrouter', svgId: 'svg-openrouter' },
+    ];
+    const ovInfoOpus = [
+      { name: 'Opus 4.6', stat: '200K', sub: 'JANELA DE TOKEN', note: 'MÁXIMA PERFORMANCE', tag: { text: 'RECOMENDADO', cls: 't-green' }, iconClass: 'ic-claude', svgId: 'svg-claude', clickable: true, clickHint: 'Clique p/ Sonnet →' },
+      ...ovInfoSonnet.slice(1),
+    ];
+
+    function renderOverview() {
+      const costData = ovShowOpus ? ovCostOpus : ovCostSonnet;
+      const qualityData = ovShowOpus ? ovQualityOpus : ovQualitySonnet;
+      const infoData = ovShowOpus ? ovInfoOpus : ovInfoSonnet;
+      renderBigCards('ov-grid-cost', costData, true);
+      renderBigCards('ov-grid-quality', qualityData, true);
+      renderBigCards('ov-grid-info', infoData, true);
+      // Add click listeners to clickable cards (Anthropic)
+      document.querySelectorAll('#overview .big-card[data-clickable="true"]').forEach(card => {
+        card.style.cursor = 'pointer';
+        card.addEventListener('click', () => {
+          ovShowOpus = !ovShowOpus;
+          renderOverview();
+        });
+      });
+    }
+
+    const glanceCost = [
+      { name: 'DeepSeek V3', stat: 'GRÁTIS', sub: 'no OpenRouter', note: ' ', rank: '1º', iconClass: 'ic-deepseek', svgId: 'svg-deepseek', bar: 100, barColor: '#4ade80' },
+      { name: 'Qwen3 Coder', stat: 'GRÁTIS', sub: 'no OpenRouter', note: ' ', rank: '2º', iconClass: 'ic-qwen', svgId: 'svg-qwen', bar: 100, barColor: '#4ade80' },
+      { name: 'Router Gratuito', stat: 'GRÁTIS', sub: 'no OpenRouter', note: ' ', rank: '3º', iconClass: 'ic-openrouter', svgId: 'svg-openrouter', bar: 100, barColor: '#4ade80' },
+      { name: 'Devstral', stat: '$0.20', sub: 'média / 1M tokens', note: ' ', iconClass: 'ic-devstral', svgId: 'svg-mistral', bar: 95, barColor: '#fb923c' },
+      { name: 'Gemini Pro', stat: '$1.40', sub: 'média / 1M tokens', note: ' ', iconClass: 'ic-gemini', svgId: 'svg-gemini', bar: 80, barColor: '#60a5fa' },
+      { name: 'Sonnet 4.6', stat: '$9.00', sub: 'média / 1M tokens', note: ' ', iconClass: 'ic-claude', svgId: 'svg-claude', bar: 30, barColor: '#D97757' },
+      { name: 'Opus 4.6', stat: '$15.00', sub: 'média / 1M tokens', note: ' ', iconClass: 'ic-claude', svgId: 'svg-claude', bar: 10, barColor: '#a78bfa' },
+    ];
+
+    const glancePerf = [
+      { name: 'Opus 4.6', stat: '9.8', statDec: '/10', sub: 'Excelente', note: 'Excelente', rank: '1º', iconClass: 'ic-claude', svgId: 'svg-claude', bar: 98, barColor: '#a78bfa' },
+      { name: 'Sonnet 4.6', stat: '9.2', statDec: '/10', sub: 'Excelente', note: 'Excelente', rank: '2º', iconClass: 'ic-claude', svgId: 'svg-claude', bar: 92, barColor: '#D97757' },
+      { name: 'Gemini Pro', stat: '8.5', statDec: '/10', sub: 'Muito Bom', note: 'Muito Bom', rank: '3º', iconClass: 'ic-gemini', svgId: 'svg-gemini', bar: 85, barColor: '#60a5fa' },
+      { name: 'DeepSeek V3', stat: '8.3', statDec: '/10', sub: 'Muito Bom', note: 'Muito Bom', iconClass: 'ic-deepseek', svgId: 'svg-deepseek', bar: 83, barColor: '#38bdf8' },
+      { name: 'Qwen3 Coder', stat: '7.2', statDec: '/10', sub: 'Bom', note: 'Bom', iconClass: 'ic-qwen', svgId: 'svg-qwen', bar: 72, barColor: '#a78bfa' },
+      { name: 'Devstral', stat: '7.0', statDec: '/10', sub: 'Bom', note: 'Bom', iconClass: 'ic-devstral', svgId: 'svg-mistral', bar: 70, barColor: '#fb923c' },
+      { name: 'Router Gratuito', stat: '7.0', statDec: '/10', sub: 'Bom', note: 'Bom', iconClass: 'ic-openrouter', svgId: 'svg-openrouter', bar: 70, barColor: '#4ade80' },
+    ];
+
+    const glanceSpeed = [
+      { name: 'Gemini Pro', stat: '9.5', statDec: '/10', sub: 'Muito Rápido', note: 'Muito Rápido', rank: '1º', iconClass: 'ic-gemini', svgId: 'svg-gemini', bar: 95, barColor: '#60a5fa' },
+      { name: 'Devstral', stat: '8.5', statDec: '/10', sub: 'Rápido', note: 'Rápido', rank: '2º', iconClass: 'ic-devstral', svgId: 'svg-mistral', bar: 85, barColor: '#fb923c' },
+      { name: 'Sonnet 4.6', stat: '8.0', statDec: '/10', sub: 'Rápido', note: 'Rápido', rank: '3º', iconClass: 'ic-claude', svgId: 'svg-claude', bar: 80, barColor: '#D97757' },
+      { name: 'Opus 4.6', stat: '6.0', statDec: '/10', sub: 'Moderado', note: 'Moderado', iconClass: 'ic-claude', svgId: 'svg-claude', bar: 60, barColor: '#a78bfa' },
+      { name: 'Router Gratuito', stat: '6.0', statDec: '/10', sub: 'Variável', note: 'Variável', iconClass: 'ic-openrouter', svgId: 'svg-openrouter', bar: 60, barColor: '#4ade80' },
+      { name: 'Qwen3 Coder', stat: '5.5', statDec: '/10', sub: 'Variável', note: 'Variável', iconClass: 'ic-qwen', svgId: 'svg-qwen', bar: 55, barColor: '#a78bfa' },
+      { name: 'DeepSeek V3', stat: '5.5', statDec: '/10', sub: 'Variável', note: 'Variável', iconClass: 'ic-deepseek', svgId: 'svg-deepseek', bar: 55, barColor: '#38bdf8' },
+    ];
+
+    renderOverview();
+    renderBigCards('grid-cost', glanceCost);
+    renderBigCards('grid-perf', glancePerf);
+    renderBigCards('grid-speed', glanceSpeed);
+
+    // Overview tabs
+    document.querySelectorAll('#ov-tabs .tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#ov-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('#overview .tab-content').forEach(c => c.classList.remove('active'));
+        document.getElementById(btn.dataset.tab).classList.add('active');
+      });
+    });
+
+    // Glance tabs
+    document.querySelectorAll('#glance-tabs .tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#glance-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('#glance .tab-content').forEach(c => c.classList.remove('active'));
+        document.getElementById(btn.dataset.tab).classList.add('active');
+      });
+    });
+
+  </script>
+</body>
+
+</html>
