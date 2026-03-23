@@ -5,6 +5,23 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Claude Code Model Picker</title>
+  <!-- Meta Pixel -->
+  <script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '1199614378426776');
+    fbq('track', 'PageView');
+  </script>
+  <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=1199614378426776&ev=PageView&noscript=1"/></noscript>
+  <!-- End Meta Pixel -->
+
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700;800&display=swap"
     rel="stylesheet">
@@ -596,6 +613,79 @@
       text-decoration: none;
     }
 
+    /* Lead Modal */
+    .lead-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(6px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .lead-overlay.active { display: flex; }
+
+    .lead-modal {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+      max-width: 420px;
+      width: 90%;
+      animation: fadeUp 0.3s ease-out;
+    }
+
+    .lead-modal h3 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .lead-modal p {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      margin-bottom: 20px;
+    }
+
+    .lead-field {
+      width: 100%;
+      background: var(--terminal-black);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      color: var(--text-main);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+      margin-bottom: 12px;
+    }
+    .lead-field:focus { border-color: var(--claude-accent); }
+    .lead-field::placeholder { color: var(--text-muted); }
+
+    .lead-submit {
+      width: 100%;
+      padding: 14px;
+      background: var(--claude-accent);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .lead-submit:hover { opacity: 0.9; }
+    .lead-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .lead-error {
+      color: #f87171;
+      font-size: 0.8rem;
+      margin-bottom: 10px;
+      display: none;
+    }
+
     #yt-link:hover div:first-of-type {
       background: rgba(217, 119, 87, 0.9) !important;
       transform: translate(-50%, -50%) scale(1.1) !important;
@@ -609,6 +699,18 @@
 </head>
 
 <body>
+
+  <!-- Lead Capture Modal -->
+  <div class="lead-overlay" id="lead-overlay">
+    <div class="lead-modal">
+      <h3>Quase lá! Receba o prompt</h3>
+      <p>Deixe seu contato para liberar o prompt de configuração.</p>
+      <div class="lead-error" id="lead-error"></div>
+      <input type="email" class="lead-field" id="lead-email" placeholder="Seu melhor e-mail" required>
+      <input type="tel" class="lead-field" id="lead-whatsapp" placeholder="WhatsApp (ex: 11999999999)" required>
+      <button class="lead-submit" id="lead-submit" onclick="submitLead()">Liberar Prompt</button>
+    </div>
+  </div>
 
   <!-- SVG Defs - Logos reais -->
   <svg style="display:none;">
@@ -955,13 +1057,88 @@ Salve e reinicie o terminal.`;
       document.getElementById('status-text').innerText = m.revert ? 'Revertendo para o Padrão' : (currentMode === 'setup' ? 'Inicializando: ' + m.id : 'Troca Rápida: ' + m.id);
       codeEl.textContent = m.revert ? REVERT_PROMPT : (currentMode === 'setup' ? setupPrompt(m.id) : changePrompt(m.id));
     }
+    // --- Lead gate ---
+
+    function isLeadCaptured() {
+      return localStorage.getItem('ccdg_lead') === '1';
+    }
+
     function copyCode() {
+      if (!isLeadCaptured()) {
+        document.getElementById('lead-overlay').classList.add('active');
+        document.getElementById('lead-email').focus();
+        return;
+      }
+      doCopy();
+    }
+
+    function doCopy() {
       navigator.clipboard.writeText(document.getElementById('code-block').textContent).then(() => {
         const btn = document.getElementById('copy-btn');
         btn.textContent = 'Copiado!'; btn.classList.add('copied');
         setTimeout(() => { btn.textContent = 'Copiar'; btn.classList.remove('copied'); }, 2000);
       });
     }
+
+    async function submitLead() {
+      const email = document.getElementById('lead-email').value.trim();
+      const whatsapp = document.getElementById('lead-whatsapp').value.trim().replace(/\D/g, '');
+      const errEl = document.getElementById('lead-error');
+      const btn = document.getElementById('lead-submit');
+
+      errEl.style.display = 'none';
+
+      if (!email || !email.includes('@')) {
+        errEl.textContent = 'Digite um e-mail válido.';
+        errEl.style.display = 'block';
+        return;
+      }
+      if (whatsapp.length < 10) {
+        errEl.textContent = 'Digite um WhatsApp válido (mínimo 10 dígitos).';
+        errEl.style.display = 'block';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Enviando...';
+
+      try {
+        const res = await fetch('/api/lead', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: email,
+            whatsapp: whatsapp,
+            modelo: models[selectedModel].id
+          })
+        });
+
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error || 'Erro ao salvar');
+        }
+
+        localStorage.setItem('ccdg_lead', '1');
+        document.getElementById('lead-overlay').classList.remove('active');
+
+        // Fire Meta Pixel Lead event
+        if (typeof fbq === 'function') fbq('track', 'Lead');
+
+        doCopy();
+      } catch (e) {
+        errEl.textContent = 'Erro ao enviar. Tente novamente.';
+        errEl.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Liberar Prompt';
+      }
+    }
+
+    // Close modal on overlay click
+    document.getElementById('lead-overlay').addEventListener('click', function(e) {
+      if (e.target === this) this.classList.remove('active');
+    });
+
     updateCode();
 
     // Update code when API key changes
