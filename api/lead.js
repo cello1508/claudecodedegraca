@@ -46,7 +46,7 @@ export default async function handler(req, res) {
   }
 
   // Parse & validate body
-  const { email, whatsapp, modelo } = req.body || {};
+  const { email, whatsapp } = req.body || {};
 
   if (!email || typeof email !== 'string' || !email.includes('@') || email.length > 254) {
     return res.status(400).json({ error: 'E-mail inválido' });
@@ -56,8 +56,6 @@ export default async function handler(req, res) {
   if (cleanWpp.length < 10 || cleanWpp.length > 15) {
     return res.status(400).json({ error: 'WhatsApp inválido' });
   }
-
-  const cleanModelo = (modelo || '').slice(0, 100);
 
   // Insert into Supabase
   try {
@@ -72,8 +70,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         email: email.trim().toLowerCase(),
         whatsapp: cleanWpp,
-        modelo: cleanModelo,
-        origem: 'claudecodedegraca',
+        source: 'claudecodedegraca',
       }),
     });
 
